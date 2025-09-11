@@ -227,14 +227,16 @@ export default function Atlas() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-0">
-              <LeafletMap
-                villages={villages || []}
-                fraClaims={fraClaims || []}
-                assets={assets || []}
-                visibleLayers={visibleLayers}
-                data-testid="leaflet-map"
-              />
+            <CardContent className="p-4">
+              <div className="rounded-lg overflow-hidden border">
+                <LeafletMap
+                  villages={villages || []}
+                  fraClaims={fraClaims || []}
+                  assets={assets || []}
+                  visibleLayers={visibleLayers}
+                  data-testid="leaflet-map"
+                />
+              </div>
             </CardContent>
           </Card>
 
