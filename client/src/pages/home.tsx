@@ -54,45 +54,53 @@ export default function Home() {
         </div>
         
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          <Card className="hover:shadow-md transition-shadow" data-testid="card-fra-digitization">
-            <CardContent className="p-6">
-              <div className="bg-primary/10 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
-                <FileText className="text-primary text-xl" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">FRA Document Digitization</h3>
-              <p className="text-muted-foreground">AI-powered OCR for converting physical FRA documents into digital records</p>
-            </CardContent>
-          </Card>
+          <Link href="/digitization">
+            <Card className="hover:shadow-lg hover:scale-105 transition-all duration-200 cursor-pointer" data-testid="card-fra-digitization">
+              <CardContent className="p-6">
+                <div className="bg-primary/10 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                  <FileText className="text-primary text-xl" />
+                </div>
+                <h3 className="font-semibold text-lg mb-2">FRA Document Digitization</h3>
+                <p className="text-muted-foreground">AI-powered OCR for converting physical FRA documents into digital records</p>
+              </CardContent>
+            </Card>
+          </Link>
 
-          <Card className="hover:shadow-md transition-shadow" data-testid="card-interactive-gis">
-            <CardContent className="p-6">
-              <div className="bg-secondary/10 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
-                <Globe className="text-secondary text-xl" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Interactive GIS Atlas</h3>
-              <p className="text-muted-foreground">Comprehensive mapping of FRA claims, village boundaries, and tribal assets</p>
-            </CardContent>
-          </Card>
+          <Link href="/atlas">
+            <Card className="hover:shadow-lg hover:scale-105 transition-all duration-200 cursor-pointer" data-testid="card-interactive-gis">
+              <CardContent className="p-6">
+                <div className="bg-secondary/10 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                  <Globe className="text-secondary text-xl" />
+                </div>
+                <h3 className="font-semibold text-lg mb-2">Interactive GIS Atlas</h3>
+                <p className="text-muted-foreground">Comprehensive mapping of FRA claims, village boundaries, and tribal assets</p>
+              </CardContent>
+            </Card>
+          </Link>
 
-          <Card className="hover:shadow-md transition-shadow" data-testid="card-asset-mapping">
-            <CardContent className="p-6">
-              <div className="bg-accent/10 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
-                <Satellite className="text-accent text-xl" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Asset Mapping</h3>
-              <p className="text-muted-foreground">Satellite-based identification and mapping of natural and community assets</p>
-            </CardContent>
-          </Card>
+          <Link href="/atlas">
+            <Card className="hover:shadow-lg hover:scale-105 transition-all duration-200 cursor-pointer" data-testid="card-asset-mapping">
+              <CardContent className="p-6">
+                <div className="bg-accent/10 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                  <Satellite className="text-accent text-xl" />
+                </div>
+                <h3 className="font-semibold text-lg mb-2">Asset Mapping</h3>
+                <p className="text-muted-foreground">Satellite-based identification and mapping of natural and community assets</p>
+              </CardContent>
+            </Card>
+          </Link>
 
-          <Card className="hover:shadow-md transition-shadow" data-testid="card-decision-support">
-            <CardContent className="p-6">
-              <div className="bg-primary/10 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
-                <Brain className="text-primary text-xl" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Decision Support System</h3>
-              <p className="text-muted-foreground">AI-driven recommendations for optimal development schemes and interventions</p>
-            </CardContent>
-          </Card>
+          <Link href="/dashboard">
+            <Card className="hover:shadow-lg hover:scale-105 transition-all duration-200 cursor-pointer" data-testid="card-decision-support">
+              <CardContent className="p-6">
+                <div className="bg-primary/10 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                  <Brain className="text-primary text-xl" />
+                </div>
+                <h3 className="font-semibold text-lg mb-2">Decision Support System</h3>
+                <p className="text-muted-foreground">AI-driven recommendations for optimal development schemes and interventions</p>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
       </div>
 

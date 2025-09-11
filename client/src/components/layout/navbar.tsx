@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Home, Upload, Map, BarChart3, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import atlasLogo from "@assets/generated_images/Atlas_logo_design_55a55711.png";
 
 export default function Navbar() {
   const [location] = useLocation();
@@ -39,20 +40,32 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-4">
-            {/* SIH 2025 Logo Placeholder */}
-            <div className="bg-primary-foreground text-primary px-3 py-1 rounded-md font-semibold text-sm">
-              SIH 2025
-            </div>
-            <h1 className="text-xl font-serif font-bold">FRA Atlas & DSS</h1>
+            <h1 className="text-xl font-serif font-bold">FRA Development Platform</h1>
           </div>
           
           {/* Desktop Navigation */}
-          <div className="hidden md:flex space-x-2">
-            <NavLinks />
+          <div className="hidden md:flex items-center space-x-4">
+            <div className="flex space-x-2">
+              <NavLinks />
+            </div>
+            {/* Atlas Logo */}
+            <Link href="/">
+              <div className="flex items-center space-x-2 bg-primary-foreground/10 px-3 py-2 rounded-lg hover:bg-primary-foreground/20 transition-colors" data-testid="atlas-logo">
+                <img src={atlasLogo} alt="Atlas Logo" className="h-8 w-12 object-contain" />
+                <span className="text-primary-foreground font-bold text-lg">Atlas</span>
+              </div>
+            </Link>
           </div>
 
           {/* Mobile Navigation */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center space-x-2">
+            {/* Mobile Atlas Logo */}
+            <Link href="/">
+              <div className="flex items-center space-x-1 bg-primary-foreground/10 px-2 py-1 rounded-md" data-testid="atlas-logo-mobile">
+                <img src={atlasLogo} alt="Atlas Logo" className="h-6 w-8 object-contain" />
+                <span className="text-primary-foreground font-bold text-sm">Atlas</span>
+              </div>
+            </Link>
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80" data-testid="mobile-menu">
