@@ -1,0 +1,259 @@
+import type { Express } from "express";
+import { createServer, type Server } from "http";
+import { storage } from "./storage";
+import { insertFraClaimSchema, insertAssetSchema, insertRecommendationSchema } from "@shared/schema";
+import { z } from "zod";
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // FRA Claims routes
+  app.get("/api/fra-claims", async (req, res) => {
+    try {
+      const claims = await storage.getFraClaims();
+      res.json(claims);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch FRA claims" });
+    }
+  });
+
+  app.get("/api/fra-claims/village/:village", async (req, res) => {
+    try {
+      const { village } = req.params;
+      const claims = await storage.getFraClaimsByVillage(village);
+      res.json(claims);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch FRA claims by village" });
+    }
+  });
+
+  app.get("/api/fra-claims/status/:status", async (req, res) => {
+    try {
+      const { status } = req.params;
+      const claims = await storage.getFraClaimsByStatus(status);
+      res.json(claims);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch FRA claims by status" });
+    }
+  });
+
+  app.post("/api/fra-claims", async (req, res) => {
+    try {
+      const validatedData = insertFraClaimSchema.parse(req.body);
+      const newClaim = await storage.createFraClaim(validatedData);
+      res.status(201).json(newClaim);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create FRA claim" });
+      }
+    }
+  });
+
+  app.patch("/api/fra-claims/:id/status", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
+      }
+
+      const updatedClaim = await storage.updateFraClaimStatus(id, status);
+      if (!updatedClaim) {
+        return res.status(404).json({ message: "FRA claim not found" });
+      }
+
+      res.json(updatedClaim);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update FRA claim status" });
+    }
+  });
+
+  // Assets routes
+  app.get("/api/assets", async (req, res) => {
+    try {
+      const assets = await storage.getAssets();
+      res.json(assets);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch assets" });
+    }
+  });
+
+  app.get("/api/assets/village/:village", async (req, res) => {
+    try {
+      const { village } = req.params;
+      const assets = await storage.getAssetsByVillage(village);
+      res.json(assets);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch assets by village" });
+    }
+  });
+
+  app.get("/api/assets/type/:type", async (req, res) => {
+    try {
+      const { type } = req.params;
+      const assets = await storage.getAssetsByType(type);
+      res.json(assets);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch assets by type" });
+    }
+  });
+
+  app.post("/api/assets", async (req, res) => {
+    try {
+      const validatedData = insertAssetSchema.parse(req.body);
+      const newAsset = await storage.createAsset(validatedData);
+      res.status(201).json(newAsset);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create asset" });
+      }
+    }
+  });
+
+  // Recommendations routes
+  app.get("/api/recommendations", async (req, res) => {
+    try {
+      const recommendations = await storage.getRecommendations();
+      res.json(recommendations);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch recommendations" });
+    }
+  });
+
+  app.get("/api/recommendations/village/:village", async (req, res) => {
+    try {
+      const { village } = req.params;
+      const recommendations = await storage.getRecommendationsByVillage(village);
+      res.json(recommendations);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch recommendations by village" });
+    }
+  });
+
+  app.get("/api/recommendations/priority/:priority", async (req, res) => {
+    try {
+      const { priority } = req.params;
+      const recommendations = await storage.getRecommendationsByPriority(priority);
+      res.json(recommendations);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch recommendations by priority" });
+    }
+  });
+
+  app.post("/api/recommendations", async (req, res) => {
+    try {
+      const validatedData = insertRecommendationSchema.parse(req.body);
+      const newRecommendation = await storage.createRecommendation(validatedData);
+      res.status(201).json(newRecommendation);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create recommendation" });
+      }
+    }
+  });
+
+  // Villages routes
+  app.get("/api/villages", async (req, res) => {
+    try {
+      const villages = await storage.getVillages();
+      res.json(villages);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch villages" });
+    }
+  });
+
+  app.get("/api/villages/district/:district", async (req, res) => {
+    try {
+      const { district } = req.params;
+      const villages = await storage.getVillagesByDistrict(district);
+      res.json(villages);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch villages by district" });
+    }
+  });
+
+  // Dashboard statistics
+  app.get("/api/dashboard/stats", async (req, res) => {
+    try {
+      const fraClaims = await storage.getFraClaims();
+      const assets = await storage.getAssets();
+      const recommendations = await storage.getRecommendations();
+      const villages = await storage.getVillages();
+
+      const stats = {
+        totalClaims: fraClaims.length,
+        grantedClaims: fraClaims.filter(c => c.status === 'granted').length,
+        pendingClaims: fraClaims.filter(c => c.status === 'pending').length,
+        rejectedClaims: fraClaims.filter(c => c.status === 'rejected').length,
+        underReviewClaims: fraClaims.filter(c => c.status === 'under_review').length,
+        totalAssets: assets.length,
+        assetsByType: {
+          pond: assets.filter(a => a.type === 'pond').length,
+          farm: assets.filter(a => a.type === 'farm').length,
+          forest: assets.filter(a => a.type === 'forest').length,
+          settlement: assets.filter(a => a.type === 'settlement').length,
+        },
+        totalRecommendations: recommendations.length,
+        activeRecommendations: recommendations.filter(r => r.isActive).length,
+        recommendationsByPriority: {
+          high: recommendations.filter(r => r.priority === 'high').length,
+          medium: recommendations.filter(r => r.priority === 'medium').length,
+          low: recommendations.filter(r => r.priority === 'low').length,
+        },
+        totalVillages: villages.length,
+        villagesByDistrict: villages.reduce((acc: Record<string, number>, village) => {
+          acc[village.district] = (acc[village.district] || 0) + 1;
+          return acc;
+        }, {}),
+      };
+
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch dashboard statistics" });
+    }
+  });
+
+  // Mock OCR endpoint for document digitization
+  app.post("/api/digitize-document", async (req, res) => {
+    try {
+      // Simulate OCR processing delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Return mock extracted data
+      const mockExtractedData = {
+        documentType: "Forest Rights Patta",
+        issueDate: "15/08/2023",
+        district: "Gondia",
+        tehsil: "Arjuni",
+        pattalHolderName: "Ramesh Kumar Bhuriya",
+        fatherName: "Govind Bhuriya", 
+        village: "Gondia",
+        tribe: "Gond",
+        totalArea: "2.5",
+        surveyNumber: "124/3A",
+        landType: "Agricultural + Forest",
+        status: "granted"
+      };
+      
+      res.json({ 
+        success: true, 
+        extractedData: mockExtractedData,
+        message: "Document processed successfully"
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        success: false, 
+        message: "Failed to process document" 
+      });
+    }
+  });
+
+  const httpServer = createServer(app);
+  return httpServer;
+}
