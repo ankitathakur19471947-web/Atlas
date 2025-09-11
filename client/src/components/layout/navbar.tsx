@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Home, Upload, Map, BarChart3, Menu } from "lucide-react";
@@ -5,6 +6,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export default function Navbar() {
   const [location] = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
 
   const navItems = [
     { path: "/", label: "Home", icon: Home },
@@ -13,7 +15,7 @@ export default function Navbar() {
     { path: "/dashboard", label: "DSS Dashboard", icon: BarChart3 },
   ];
 
-  const NavLinks = ({ mobile = false }) => (
+  const NavLinks = ({ mobile = false, onNavigate }: { mobile?: boolean; onNavigate?: () => void }) => (
     <>
       {navItems.map((item) => {
         const Icon = item.icon;
@@ -24,6 +26,7 @@ export default function Navbar() {
               variant={isActive ? "secondary" : "ghost"}
               className={`${mobile ? "w-full justify-start" : ""} text-primary-foreground hover:bg-primary/80 ${isActive ? "bg-primary/80" : ""}`}
               data-testid={`nav-${item.path.replace("/", "") || "home"}`}
+              onClick={mobile ? onNavigate : undefined}
             >
               <Icon className="mr-2 h-4 w-4" />
               {item.label}
@@ -49,7 +52,7 @@ export default function Navbar() {
 
           {/* Mobile Navigation */}
           <div className="md:hidden">
-            <Sheet>
+            <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80" data-testid="mobile-menu">
                   <Menu className="h-6 w-6" />
@@ -57,7 +60,7 @@ export default function Navbar() {
               </SheetTrigger>
               <SheetContent side="right" className="bg-primary text-primary-foreground">
                 <div className="flex flex-col space-y-4 mt-8">
-                  <NavLinks mobile />
+                  <NavLinks mobile onNavigate={() => setIsOpen(false)} />
                 </div>
               </SheetContent>
             </Sheet>
