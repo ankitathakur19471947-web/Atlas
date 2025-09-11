@@ -61,7 +61,13 @@ export default function Atlas() {
     queryKey: ["/api/assets"],
   });
 
-  const { data: stats } = useQuery({
+  interface DashboardStats {
+    totalClaims: number;
+    totalAssets: number;
+    totalVillages: number;
+  }
+
+  const { data: stats } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
   });
 

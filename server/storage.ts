@@ -3,9 +3,11 @@ import {
   type FraClaim, type InsertFraClaim,
   type Asset, type InsertAsset,
   type Recommendation, type InsertRecommendation,
-  type Village, type InsertVillage
+  type Village, type InsertVillage,
+  users, fraClaims, assets, recommendations, villages
 } from "@shared/schema";
-import { randomUUID } from "crypto";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -41,293 +43,264 @@ export interface IStorage {
   getVillagesByDistrict(district: string): Promise<Village[]>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-  private fraClaims: Map<string, FraClaim>;
-  private assets: Map<string, Asset>;
-  private recommendations: Map<string, Recommendation>;
-  private villages: Map<string, Village>;
-
+export class DatabaseStorage implements IStorage {
   constructor() {
-    this.users = new Map();
-    this.fraClaims = new Map();
-    this.assets = new Map();
-    this.recommendations = new Map();
-    this.villages = new Map();
-    
-    // Initialize with mock data
-    this.initializeMockData();
+    // Initialize with mock data on first startup
+    this.initializeMockDataIfEmpty();
   }
 
-  private initializeMockData() {
-    // Mock Villages
-    const mockVillages: Village[] = [
-      {
-        id: randomUUID(),
-        name: "Gondia",
-        district: "Gondia",
-        tehsil: "Arjuni",
-        population: 15420,
-        tribalPopulation: 12000,
-        waterIndex: "6.5",
-        developmentIndex: "7.2",
-        latitude: "21.1558",
-        longitude: "79.0882",
-        boundaries: '{"type":"Polygon","coordinates":[[[79.0782,21.1558],[79.0982,21.1558],[79.0982,21.1358],[79.0782,21.1358],[79.0782,21.1558]]]}',
-        createdAt: new Date(),
-      },
-      {
-        id: randomUUID(),
-        name: "Arjuni",
-        district: "Gondia", 
-        tehsil: "Arjuni",
-        population: 12340,
-        tribalPopulation: 9800,
-        waterIndex: "5.8",
-        developmentIndex: "6.8",
-        latitude: "21.1458",
-        longitude: "79.1082",
-        boundaries: '{"type":"Polygon","coordinates":[[[79.1082,21.1458],[79.1282,21.1458],[79.1282,21.1258],[79.1082,21.1258],[79.1082,21.1458]]]}',
-        createdAt: new Date(),
+  private async initializeMockDataIfEmpty() {
+    try {
+      // Check if data already exists
+      const existingVillages = await db.select().from(villages).limit(1);
+      if (existingVillages.length > 0) {
+        return; // Data already exists, skip initialization
       }
-    ];
 
-    // Mock FRA Claims
-    const mockClaims: FraClaim[] = [
-      {
-        id: randomUUID(),
-        pattalHolderName: "Ramesh Kumar Bhuriya",
-        fatherName: "Govind Bhuriya",
-        village: "Gondia",
-        district: "Gondia",
-        tehsil: "Arjuni", 
-        tribe: "Gond",
-        totalArea: "2.50",
-        surveyNumber: "124/3A",
-        landType: "Agricultural + Forest",
-        status: "granted",
-        issueDate: new Date("2023-08-15"),
-        documentType: "Forest Rights Patta",
-        latitude: "21.1508",
-        longitude: "79.0882",
-        createdAt: new Date(),
-      },
-      {
-        id: randomUUID(),
-        pattalHolderName: "Priya Tekam",
-        fatherName: "Suresh Tekam",
-        village: "Arjuni",
-        district: "Gondia",
-        tehsil: "Arjuni",
-        tribe: "Gond",
-        totalArea: "1.80",
-        surveyNumber: "87/2B", 
-        landType: "Agricultural",
-        status: "pending",
-        issueDate: null,
-        documentType: "Forest Rights Patta",
-        latitude: "21.1408",
-        longitude: "79.0982",
-        createdAt: new Date(),
-      }
-    ];
+      // Insert mock villages
+      await db.insert(villages).values([
+        {
+          name: "Gondia",
+          district: "Gondia",
+          tehsil: "Arjuni",
+          population: 15420,
+          tribalPopulation: 12000,
+          waterIndex: "6.5",
+          developmentIndex: "7.2",
+          latitude: "21.1558",
+          longitude: "79.0882",
+          boundaries: '{"type":"Polygon","coordinates":[[[79.0782,21.1558],[79.0982,21.1558],[79.0982,21.1358],[79.0782,21.1358],[79.0782,21.1558]]]}',
+        },
+        {
+          name: "Arjuni",
+          district: "Gondia", 
+          tehsil: "Arjuni",
+          population: 12340,
+          tribalPopulation: 9800,
+          waterIndex: "5.8",
+          developmentIndex: "6.8",
+          latitude: "21.1458",
+          longitude: "79.1082",
+          boundaries: '{"type":"Polygon","coordinates":[[[79.1082,21.1458],[79.1282,21.1458],[79.1282,21.1258],[79.1082,21.1258],[79.1082,21.1458]]]}',
+        }
+      ]);
 
-    // Mock Assets
-    const mockAssets: Asset[] = [
-      {
-        id: randomUUID(),
-        name: "Village Pond 1",
-        type: "pond",
-        village: "Gondia",
-        district: "Gondia",
-        latitude: "21.1458",
-        longitude: "79.0832",
-        description: "Primary water source for irrigation",
-        createdAt: new Date(),
-      },
-      {
-        id: randomUUID(),
-        name: "Cooperative Farm",
-        type: "farm",
-        village: "Arjuni",
-        district: "Gondia",
-        latitude: "21.1358",
-        longitude: "79.0932",
-        description: "Community agricultural land",
-        createdAt: new Date(),
-      }
-    ];
+      // Insert mock FRA claims
+      await db.insert(fraClaims).values([
+        {
+          pattalHolderName: "Ramesh Kumar Bhuriya",
+          fatherName: "Govind Bhuriya",
+          village: "Gondia",
+          district: "Gondia",
+          tehsil: "Arjuni", 
+          tribe: "Gond",
+          totalArea: "2.50",
+          surveyNumber: "124/3A",
+          landType: "Agricultural + Forest",
+          status: "granted",
+          issueDate: new Date("2023-08-15"),
+          documentType: "Forest Rights Patta",
+          latitude: "21.1508",
+          longitude: "79.0882",
+        },
+        {
+          pattalHolderName: "Priya Tekam",
+          fatherName: "Suresh Tekam",
+          village: "Arjuni",
+          district: "Gondia",
+          tehsil: "Arjuni",
+          tribe: "Gond",
+          totalArea: "1.80",
+          surveyNumber: "87/2B", 
+          landType: "Agricultural",
+          status: "pending",
+          issueDate: null,
+          documentType: "Forest Rights Patta",
+          latitude: "21.1408",
+          longitude: "79.0982",
+        }
+      ]);
 
-    // Mock Recommendations
-    const mockRecommendations: Recommendation[] = [
-      {
-        id: randomUUID(),
-        schemeName: "Jal Jeevan Mission",
-        schemeType: "jal_jeevan",
-        priority: "high",
-        village: "Gondia",
-        district: "Gondia",
-        description: "Low water index detected. Immediate water infrastructure development recommended.",
-        eligibleBeneficiaries: 856,
-        estimatedBudget: "125000.00",
-        isActive: true,
-        createdAt: new Date(),
-      },
-      {
-        id: randomUUID(),
-        schemeName: "PM-Kisan Scheme",
-        schemeType: "pm_kisan",
-        priority: "medium",
-        village: "Arjuni", 
-        district: "Gondia",
-        description: "Agricultural land identified without active scheme enrollment.",
-        eligibleBeneficiaries: 234,
-        estimatedBudget: "468000.00",
-        isActive: true,
-        createdAt: new Date(),
-      }
-    ];
+      // Insert mock assets
+      await db.insert(assets).values([
+        {
+          name: "Village Pond 1",
+          type: "pond",
+          village: "Gondia",
+          district: "Gondia",
+          latitude: "21.1458",
+          longitude: "79.0832",
+          description: "Primary water source for irrigation",
+        },
+        {
+          name: "Cooperative Farm",
+          type: "farm",
+          village: "Arjuni",
+          district: "Gondia",
+          latitude: "21.1358",
+          longitude: "79.0932",
+          description: "Community agricultural land",
+        }
+      ]);
 
-    // Populate storage
-    mockVillages.forEach(village => this.villages.set(village.id, village));
-    mockClaims.forEach(claim => this.fraClaims.set(claim.id, claim));
-    mockAssets.forEach(asset => this.assets.set(asset.id, asset));
-    mockRecommendations.forEach(rec => this.recommendations.set(rec.id, rec));
+      // Insert mock recommendations
+      await db.insert(recommendations).values([
+        {
+          schemeName: "Jal Jeevan Mission",
+          schemeType: "jal_jeevan",
+          priority: "high",
+          village: "Gondia",
+          district: "Gondia",
+          description: "Low water index detected. Immediate water infrastructure development recommended.",
+          eligibleBeneficiaries: 856,
+          estimatedBudget: "125000.00",
+          isActive: true,
+        },
+        {
+          schemeName: "PM-Kisan Scheme",
+          schemeType: "pm_kisan",
+          priority: "medium",
+          village: "Arjuni", 
+          district: "Gondia",
+          description: "Agricultural land identified without active scheme enrollment.",
+          eligibleBeneficiaries: 234,
+          estimatedBudget: "468000.00",
+          isActive: true,
+        }
+      ]);
+
+    } catch (error) {
+      console.error("Error initializing mock data:", error);
+    }
   }
 
   // User methods
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.username === username);
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
   // FRA Claims methods
   async getFraClaims(): Promise<FraClaim[]> {
-    return Array.from(this.fraClaims.values());
+    return await db.select().from(fraClaims);
   }
 
   async getFraClaimById(id: string): Promise<FraClaim | undefined> {
-    return this.fraClaims.get(id);
+    const [claim] = await db.select().from(fraClaims).where(eq(fraClaims.id, id));
+    return claim || undefined;
   }
 
   async createFraClaim(claim: InsertFraClaim): Promise<FraClaim> {
-    const id = randomUUID();
-    const newClaim: FraClaim = { 
-      ...claim, 
-      id, 
-      createdAt: new Date()
-    };
-    this.fraClaims.set(id, newClaim);
+    const [newClaim] = await db
+      .insert(fraClaims)
+      .values(claim)
+      .returning();
     return newClaim;
   }
 
   async updateFraClaimStatus(id: string, status: string): Promise<FraClaim | undefined> {
-    const claim = this.fraClaims.get(id);
-    if (claim) {
-      claim.status = status;
-      this.fraClaims.set(id, claim);
-      return claim;
-    }
-    return undefined;
+    const [updatedClaim] = await db
+      .update(fraClaims)
+      .set({ status })
+      .where(eq(fraClaims.id, id))
+      .returning();
+    return updatedClaim || undefined;
   }
 
   async getFraClaimsByVillage(village: string): Promise<FraClaim[]> {
-    return Array.from(this.fraClaims.values()).filter(claim => claim.village === village);
+    return await db.select().from(fraClaims).where(eq(fraClaims.village, village));
   }
 
   async getFraClaimsByStatus(status: string): Promise<FraClaim[]> {
-    return Array.from(this.fraClaims.values()).filter(claim => claim.status === status);
+    return await db.select().from(fraClaims).where(eq(fraClaims.status, status));
   }
 
   // Assets methods
   async getAssets(): Promise<Asset[]> {
-    return Array.from(this.assets.values());
+    return await db.select().from(assets);
   }
 
   async getAssetById(id: string): Promise<Asset | undefined> {
-    return this.assets.get(id);
+    const [asset] = await db.select().from(assets).where(eq(assets.id, id));
+    return asset || undefined;
   }
 
   async createAsset(asset: InsertAsset): Promise<Asset> {
-    const id = randomUUID();
-    const newAsset: Asset = { 
-      ...asset, 
-      id, 
-      createdAt: new Date()
-    };
-    this.assets.set(id, newAsset);
+    const [newAsset] = await db
+      .insert(assets)
+      .values(asset)
+      .returning();
     return newAsset;
   }
 
   async getAssetsByVillage(village: string): Promise<Asset[]> {
-    return Array.from(this.assets.values()).filter(asset => asset.village === village);
+    return await db.select().from(assets).where(eq(assets.village, village));
   }
 
   async getAssetsByType(type: string): Promise<Asset[]> {
-    return Array.from(this.assets.values()).filter(asset => asset.type === type);
+    return await db.select().from(assets).where(eq(assets.type, type));
   }
 
   // Recommendations methods
   async getRecommendations(): Promise<Recommendation[]> {
-    return Array.from(this.recommendations.values());
+    return await db.select().from(recommendations);
   }
 
   async getRecommendationById(id: string): Promise<Recommendation | undefined> {
-    return this.recommendations.get(id);
+    const [recommendation] = await db.select().from(recommendations).where(eq(recommendations.id, id));
+    return recommendation || undefined;
   }
 
   async createRecommendation(recommendation: InsertRecommendation): Promise<Recommendation> {
-    const id = randomUUID();
-    const newRec: Recommendation = { 
-      ...recommendation, 
-      id, 
-      createdAt: new Date()
-    };
-    this.recommendations.set(id, newRec);
+    const [newRec] = await db
+      .insert(recommendations)
+      .values(recommendation)
+      .returning();
     return newRec;
   }
 
   async getRecommendationsByVillage(village: string): Promise<Recommendation[]> {
-    return Array.from(this.recommendations.values()).filter(rec => rec.village === village);
+    return await db.select().from(recommendations).where(eq(recommendations.village, village));
   }
 
   async getRecommendationsByPriority(priority: string): Promise<Recommendation[]> {
-    return Array.from(this.recommendations.values()).filter(rec => rec.priority === priority);
+    return await db.select().from(recommendations).where(eq(recommendations.priority, priority));
   }
 
   // Villages methods
   async getVillages(): Promise<Village[]> {
-    return Array.from(this.villages.values());
+    return await db.select().from(villages);
   }
 
   async getVillageById(id: string): Promise<Village | undefined> {
-    return this.villages.get(id);
+    const [village] = await db.select().from(villages).where(eq(villages.id, id));
+    return village || undefined;
   }
 
   async createVillage(village: InsertVillage): Promise<Village> {
-    const id = randomUUID();
-    const newVillage: Village = { 
-      ...village, 
-      id, 
-      createdAt: new Date()
-    };
-    this.villages.set(id, newVillage);
+    const [newVillage] = await db
+      .insert(villages)
+      .values(village)
+      .returning();
     return newVillage;
   }
 
   async getVillagesByDistrict(district: string): Promise<Village[]> {
-    return Array.from(this.villages.values()).filter(village => village.district === district);
+    return await db.select().from(villages).where(eq(villages.district, district));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
