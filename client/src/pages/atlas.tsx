@@ -35,7 +35,90 @@ interface Asset {
   longitude: string;
 }
 
+// State-District mapping for Indian states (focusing on FRA relevant states)
+const stateDistrictMapping = {
+  "maharashtra": {
+    name: "Maharashtra",
+    districts: ["gondia", "gadchiroli", "chandrapur", "wardha", "yavatmal", "amravati", "nanded"]
+  },
+  "madhya-pradesh": {
+    name: "Madhya Pradesh", 
+    districts: ["betul", "chhindwara", "seoni", "mandla", "dindori", "balaghat", "shahdol"]
+  },
+  "chhattisgarh": {
+    name: "Chhattisgarh",
+    districts: ["bastar", "dantewada", "sukma", "bijapur", "narayanpur", "kondagaon", "kanker"]
+  },
+  "odisha": {
+    name: "Odisha",
+    districts: ["mayurbhanj", "keonjhar", "sundargarh", "sambalpur", "koraput", "malkangiri", "rayagada"]
+  },
+  "jharkhand": {
+    name: "Jharkhand",
+    districts: ["ranchi", "gumla", "simdega", "lohardaga", "latehar", "palamau", "garhwa"]
+  },
+  "gujarat": {
+    name: "Gujarat",
+    districts: ["bharuch", "narmada", "tapi", "dang", "valsad", "navsari", "surat"]
+  },
+  "rajasthan": {
+    name: "Rajasthan",
+    districts: ["udaipur", "dungarpur", "banswara", "pratapgarh", "rajsamand", "sirohi", "pali"]
+  },
+  "andhra-pradesh": {
+    name: "Andhra Pradesh",
+    districts: ["visakhapatnam", "vizianagaram", "srikakulam", "east-godavari", "west-godavari", "krishna", "guntur"]
+  },
+  "telangana": {
+    name: "Telangana",
+    districts: ["adilabad", "komaram-bheem", "mancherial", "nirmal", "nizamabad", "jagtial", "rajanna-sircilla"]
+  },
+  "kerala": {
+    name: "Kerala",
+    districts: ["wayanad", "idukki", "palakkad", "malappuram", "kozhikode", "kannur", "kasaragod"]
+  }
+};
+
+// District-Village mapping (sample villages for each district)
+const districtVillageMapping: Record<string, string[]> = {
+  // Maharashtra
+  "gondia": ["Arjuni", "Morgaon", "Salekasa", "Sadak-Arjuni", "Goregaon", "Tirora", "Amgaon"],
+  "gadchiroli": ["Aheri", "Armori", "Bhamragad", "Chamorshi", "Desaiganj", "Dhanora", "Etapalli"],
+  "chandrapur": ["Ballarpur", "Bramhapuri", "Chimur", "Corbett", "Gondpipri", "Jivati", "Mul"],
+  "wardha": ["Arvi", "Ashti", "Deoli", "Hinganghat", "Karanja", "Samudrapur", "Seloo"],
+  "yavatmal": ["Arni", "Babhulgaon", "Darwha", "Digras", "Ghatanji", "Kalamb", "Kelapur"],
+  "amravati": ["Achalpur", "Anjangaon", "Bhatkuli", "Chandur", "Dharni", "Dhamangaon", "Morshi"],
+  "nanded": ["Ardhapur", "Bhokar", "Degloor", "Dharmabad", "Hadgaon", "Himayatnagar", "Kandhar"],
+  
+  // Madhya Pradesh
+  "betul": ["Amla", "Bhainsdehi", "Chicholi", "Ghoradongri", "Multai", "Prabhat-Pattan", "Shahpur"],
+  "chhindwara": ["Amarwara", "Bichhiya", "Chourai", "Harrai", "Junnardeo", "Mohkhed", "Pandhurna"],
+  "seoni": ["Barghat", "Dhobani", "Ghansour", "Kurai", "Lakhnadon", "Mandla", "Ukwa"],
+  "mandla": ["Bijadandi", "Ghughari", "Mohgaon", "Narayanganj", "Nainpur", "Narayanpur", "Niwas"],
+  "dindori": ["Amarpur", "Bajag", "Karanjia", "Mehandwani", "Samnapur", "Shahpura", "Bajag"],
+  "balaghat": ["Baihar", "Birsa", "Katangi", "Khairlanji", "Lalbarra", "Paraswada", "Waraseoni"],
+  "shahdol": ["Beohari", "Budhar", "Jaisinghnagar", "Jaitpur", "Sohagpur", "Burhar", "Gohparu"],
+  
+  // Chhattisgarh
+  "bastar": ["Bakawand", "Bastanar", "Darbha", "Jagdalpur", "Kondagaon", "Lohandiguda", "Tokapal"],
+  "dantewada": ["Barsoor", "Dantewada", "Geedam", "Katekalyan", "Kuakonda", "Sukma", "Bhansi"],
+  "sukma": ["Chintagufa", "Dornapal", "Errabore", "Jagargunda", "Kistaram", "Konta", "Sukma"],
+  "bijapur": ["Awapalli", "Basaguda", "Bhairamgarh", "Bijapur", "Gangaloor", "Mirtur", "Usoor"],
+  "narayanpur": ["Abujhmad", "Chhote-Bethiya", "Kohkameta", "Narayanpur", "Orchha", "Pharasgaon", "Sonpur"],
+  "kondagaon": ["Baderajpur", "Farasgaon", "Kondagaon", "Makdi", "Pharasgaon", "Bakulwara", "Keskal"],
+  "kanker": ["Antagarh", "Bhanupratappur", "Charama", "Kanker", "Koyalibeda", "Narharpur", "Pakhanjur"],
+  
+  // Add other states as needed...
+  "mayurbhanj": ["Badasahi", "Baripada", "Bijatala", "Gopabandhu", "Jashipur", "Karanjia", "Kuliana"],
+  "keonjhar": ["Anandapur", "Banspal", "Barbil", "Champua", "Ghatgaon", "Harichandanpur", "Jhumpura"],
+  "sundargarh": ["Balisankara", "Bargaon", "Bisra", "Bonai", "Gurundia", "Hemgir", "Kutra"],
+  
+  // Default for any missing districts
+  "default": ["Village A", "Village B", "Village C", "Village D", "Village E"]
+};
+
 export default function Atlas() {
+  const [selectedState, setSelectedState] = useState<string>("maharashtra");
   const [selectedDistrict, setSelectedDistrict] = useState<string>("gondia");
   const [selectedVillage, setSelectedVillage] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
@@ -77,6 +160,26 @@ export default function Atlas() {
       [layerName]: !prev[layerName as keyof typeof prev]
     }));
   };
+
+  const handleStateChange = (state: string) => {
+    setSelectedState(state);
+    // Reset district and village when state changes
+    const firstDistrict = stateDistrictMapping[state as keyof typeof stateDistrictMapping]?.districts[0] || "gondia";
+    setSelectedDistrict(firstDistrict);
+    setSelectedVillage("all");
+  };
+
+  const handleDistrictChange = (district: string) => {
+    setSelectedDistrict(district);
+    // Reset village when district changes
+    setSelectedVillage("all");
+  };
+
+  // Get available districts for selected state
+  const availableDistricts = stateDistrictMapping[selectedState as keyof typeof stateDistrictMapping]?.districts || [];
+  
+  // Get available villages for selected district
+  const availableVillages = districtVillageMapping[selectedDistrict] || districtVillageMapping["default"];
 
   const handleExport = () => {
     toast({
@@ -135,18 +238,36 @@ export default function Atlas() {
 
             {/* Filter Controls */}
             <div className="mt-6 space-y-4">
-              <h3 className="font-medium">Filters</h3>
+              <h3 className="font-medium">Geographic Filters</h3>
               
               <div>
-                <Label className="text-sm text-muted-foreground mb-1 block">District</Label>
-                <Select value={selectedDistrict} onValueChange={setSelectedDistrict} data-testid="select-district">
+                <Label className="text-sm text-muted-foreground mb-1 block">State</Label>
+                <Select value={selectedState} onValueChange={handleStateChange} data-testid="select-state">
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="gondia">Gondia</SelectItem>
-                    <SelectItem value="gadchiroli">Gadchiroli</SelectItem>
-                    <SelectItem value="chandrapur">Chandrapur</SelectItem>
+                    {Object.entries(stateDistrictMapping).map(([key, state]) => (
+                      <SelectItem key={key} value={key}>
+                        {state.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label className="text-sm text-muted-foreground mb-1 block">District</Label>
+                <Select value={selectedDistrict} onValueChange={handleDistrictChange} data-testid="select-district">
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableDistricts.map(district => (
+                      <SelectItem key={district} value={district}>
+                        {district.charAt(0).toUpperCase() + district.slice(1).replace('-', ' ')}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -159,9 +280,9 @@ export default function Atlas() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Villages</SelectItem>
-                    {villages?.map(village => (
-                      <SelectItem key={village.id} value={village.name.toLowerCase()}>
-                        {village.name}
+                    {availableVillages.map(village => (
+                      <SelectItem key={village} value={village.toLowerCase()}>
+                        {village}
                       </SelectItem>
                     ))}
                   </SelectContent>
