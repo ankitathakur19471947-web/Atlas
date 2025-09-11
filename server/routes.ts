@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { 
@@ -8,6 +8,132 @@ import {
   claimStatusSchema 
 } from "@shared/schema";
 import { z } from "zod";
+import multer from "multer";
+import { createWorker } from "tesseract.js";
+
+// Define the extended Request interface for multer
+interface MulterRequest extends Request {
+  file?: Express.Multer.File;
+}
+
+// Configure multer for file uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept images and PDFs
+    if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files and PDFs are allowed'));
+    }
+  },
+});
+
+// OCR text processing utility
+function extractFRADataFromText(text: string) {
+  const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+  
+  // Initialize default data
+  const extractedData = {
+    documentType: "Forest Rights Patta",
+    issueDate: "",
+    district: "",
+    tehsil: "",
+    pattalHolderName: "",
+    fatherName: "",
+    village: "",
+    tribe: "",
+    totalArea: "",
+    surveyNumber: "",
+    landType: "",
+    status: "pending"
+  };
+
+  // Extract data using patterns and keywords
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].toLowerCase();
+    const nextLine = i + 1 < lines.length ? lines[i + 1] : "";
+    
+    // Look for key patterns in FRA documents
+    if (line.includes('patta holder') || line.includes('name')) {
+      if (nextLine && !nextLine.toLowerCase().includes('father')) {
+        extractedData.pattalHolderName = nextLine;
+      }
+    }
+    
+    if (line.includes('father') || line.includes('s/o')) {
+      if (nextLine) {
+        extractedData.fatherName = nextLine;
+      }
+    }
+    
+    if (line.includes('village')) {
+      if (nextLine) {
+        extractedData.village = nextLine;
+      }
+    }
+    
+    if (line.includes('district')) {
+      if (nextLine) {
+        extractedData.district = nextLine;
+      }
+    }
+    
+    if (line.includes('tehsil') || line.includes('taluka')) {
+      if (nextLine) {
+        extractedData.tehsil = nextLine;
+      }
+    }
+    
+    if (line.includes('tribe') || line.includes('community')) {
+      if (nextLine) {
+        extractedData.tribe = nextLine;
+      }
+    }
+    
+    if (line.includes('area') || line.includes('hectare') || line.includes('acre')) {
+      // Look for area values
+      const areaMatch = line.match(/(\d+\.?\d*)\s*(hectare|acre|ha)/i);
+      if (areaMatch) {
+        extractedData.totalArea = areaMatch[1];
+      } else if (nextLine) {
+        const nextAreaMatch = nextLine.match(/(\d+\.?\d*)/);
+        if (nextAreaMatch) {
+          extractedData.totalArea = nextAreaMatch[1];
+        }
+      }
+    }
+    
+    if (line.includes('survey') || line.includes('khasra')) {
+      const surveyMatch = line.match(/(\d+\/?\d*[a-z]*)/i);
+      if (surveyMatch) {
+        extractedData.surveyNumber = surveyMatch[1];
+      }
+    }
+    
+    // Date patterns
+    const dateMatch = line.match(/(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/);
+    if (dateMatch) {
+      extractedData.issueDate = dateMatch[1];
+    }
+    
+    // Land type detection
+    if (line.includes('agricultural') || line.includes('forest') || line.includes('cultivable')) {
+      if (line.includes('agricultural') && line.includes('forest')) {
+        extractedData.landType = "Agricultural + Forest";
+      } else if (line.includes('agricultural')) {
+        extractedData.landType = "Agricultural";
+      } else if (line.includes('forest')) {
+        extractedData.landType = "Forest";
+      }
+    }
+  }
+  
+  return extractedData;
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
@@ -232,37 +358,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Mock OCR endpoint for document digitization
-  app.post("/api/digitize-document", async (req, res) => {
+  // Real OCR endpoint for document digitization using Tesseract.js
+  app.post("/api/digitize-document", upload.single('document'), async (req: MulterRequest, res) => {
     try {
-      // Simulate OCR processing delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Return mock extracted data
-      const mockExtractedData = {
-        documentType: "Forest Rights Patta",
-        issueDate: "15/08/2023",
-        district: "Gondia",
-        tehsil: "Arjuni",
-        pattalHolderName: "Ramesh Kumar Bhuriya",
-        fatherName: "Govind Bhuriya", 
-        village: "Gondia",
-        tribe: "Gond",
-        totalArea: "2.5",
-        surveyNumber: "124/3A",
-        landType: "Agricultural + Forest",
-        status: "granted"
-      };
-      
-      res.json({ 
-        success: true, 
-        extractedData: mockExtractedData,
-        message: "Document processed successfully"
+      if (!req.file) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "No file uploaded" 
+        });
+      }
+
+      console.log(`Processing file: ${req.file.originalname}, Size: ${req.file.size} bytes`);
+
+      // Create a Tesseract worker
+      const worker = await createWorker('eng', 1, {
+        logger: m => console.log(m) // Enable logging for debugging
       });
+
+      try {
+        // Perform OCR on the uploaded file
+        const { data: { text } } = await worker.recognize(req.file.buffer);
+        
+        console.log("Extracted text:", text);
+
+        // Extract structured data from the OCR text
+        const extractedData = extractFRADataFromText(text);
+        
+        // If no meaningful data was extracted, provide helpful feedback
+        if (!extractedData.pattalHolderName && !extractedData.village && !extractedData.district) {
+          return res.json({
+            success: false,
+            message: "Could not extract FRA document data. Please ensure the image is clear and contains FRA document text.",
+            rawText: text.substring(0, 500) // First 500 chars for debugging
+          });
+        }
+
+        await worker.terminate();
+
+        res.json({ 
+          success: true, 
+          extractedData,
+          message: "Document processed successfully using OCR",
+          confidence: "Real OCR extraction completed"
+        });
+
+      } catch (ocrError) {
+        await worker.terminate();
+        console.error("OCR processing error:", ocrError);
+        res.status(500).json({ 
+          success: false, 
+          message: "OCR processing failed. Please try with a clearer image."
+        });
+      }
+
     } catch (error) {
+      console.error("Document processing error:", error);
       res.status(500).json({ 
         success: false, 
-        message: "Failed to process document" 
+        message: "Failed to process document"
       });
     }
   });

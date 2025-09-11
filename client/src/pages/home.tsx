@@ -20,12 +20,12 @@ export default function Home() {
     <main className="min-h-screen">
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-primary to-secondary text-primary-foreground tribal-pattern">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 relative z-10">
           <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-serif font-bold mb-6">
+            <h1 className="text-4xl md:text-6xl font-serif font-bold mb-6 text-white drop-shadow-lg">
               FRA Atlas & Decision Support System
             </h1>
-            <p className="text-xl md:text-2xl mb-8 opacity-90 max-w-3xl mx-auto">
+            <p className="text-xl md:text-2xl mb-8 text-white/95 max-w-3xl mx-auto drop-shadow-md">
               Empowering tribal communities through digital documentation, intelligent mapping, and data-driven development strategies
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
