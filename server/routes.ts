@@ -1,7 +1,12 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertFraClaimSchema, insertAssetSchema, insertRecommendationSchema } from "@shared/schema";
+import { 
+  insertFraClaimSchema, 
+  insertAssetSchema, 
+  insertRecommendationSchema,
+  claimStatusSchema 
+} from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -53,20 +58,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/fra-claims/:id/status", async (req, res) => {
     try {
       const { id } = req.params;
-      const { status } = req.body;
       
-      if (!status) {
-        return res.status(400).json({ message: "Status is required" });
+      // Validate status with zod enum
+      const statusValidation = claimStatusSchema.safeParse(req.body.status);
+      if (!statusValidation.success) {
+        return res.status(400).json({ 
+          message: "Invalid status", 
+          errors: statusValidation.error.errors 
+        });
       }
 
-      const updatedClaim = await storage.updateFraClaimStatus(id, status);
+      const updatedClaim = await storage.updateFraClaimStatus(id, statusValidation.data);
       if (!updatedClaim) {
         return res.status(404).json({ message: "FRA claim not found" });
       }
 
       res.json(updatedClaim);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update FRA claim status" });
+      if (error instanceof Error && error.message.includes("Invalid status")) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Failed to update FRA claim status" });
+      }
     }
   });
 

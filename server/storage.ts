@@ -8,6 +8,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
+import { AuthUtils } from "./auth";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -186,9 +187,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
+    // Validate password strength
+    if (!AuthUtils.validatePasswordStrength(insertUser.password)) {
+      throw new Error("Password must be at least 8 characters long and contain uppercase, lowercase, and number");
+    }
+    
+    // Hash password before storing
+    const hashedPassword = await AuthUtils.hashPassword(insertUser.password);
+    
     const [user] = await db
       .insert(users)
-      .values(insertUser)
+      .values({
+        ...insertUser,
+        password: hashedPassword
+      })
       .returning();
     return user;
   }
@@ -212,9 +224,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateFraClaimStatus(id: string, status: string): Promise<FraClaim | undefined> {
+    // Validate status is a valid enum value
+    const validStatuses = ["pending", "granted", "rejected", "under_review"];
+    if (!validStatuses.includes(status)) {
+      throw new Error(`Invalid status: ${status}. Must be one of: ${validStatuses.join(", ")}`);
+    }
+    
     const [updatedClaim] = await db
       .update(fraClaims)
-      .set({ status })
+      .set({ status: status as "pending" | "granted" | "rejected" | "under_review" })
       .where(eq(fraClaims.id, id))
       .returning();
     return updatedClaim || undefined;
@@ -225,7 +243,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getFraClaimsByStatus(status: string): Promise<FraClaim[]> {
-    return await db.select().from(fraClaims).where(eq(fraClaims.status, status));
+    return await db.select().from(fraClaims).where(eq(fraClaims.status, status as "pending" | "granted" | "rejected" | "under_review"));
   }
 
   // Assets methods
@@ -251,7 +269,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAssetsByType(type: string): Promise<Asset[]> {
-    return await db.select().from(assets).where(eq(assets.type, type));
+    return await db.select().from(assets).where(eq(assets.type, type as "pond" | "farm" | "forest" | "settlement"));
   }
 
   // Recommendations methods
@@ -277,7 +295,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRecommendationsByPriority(priority: string): Promise<Recommendation[]> {
-    return await db.select().from(recommendations).where(eq(recommendations.priority, priority));
+    return await db.select().from(recommendations).where(eq(recommendations.priority, priority as "high" | "medium" | "low"));
   }
 
   // Villages methods
