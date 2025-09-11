@@ -1,0 +1,56 @@
+Build a full-stack web application prototype for SIH Problem Statement PS-25018: 
+“FRA Atlas and Decision Support System for Tribal Development”.
+
+Tech Stack:
+- Frontend: React.js
+- Backend: Node.js + Express
+- Database: Use SQLite or JSON as mock database (demo purpose).
+- Map: Leaflet.js (render interactive GIS map).
+- AI: Mock OCR + Mock Satellite Mapping (use pre-filled sample data).
+
+Features to implement:
+1. Landing Page:
+   - Title: “FRA Atlas & DSS Prototype”
+   - Navigation: Home, Atlas, DSS Dashboard.
+
+2. FRA Digitization Module (Demo):
+   - Upload scanned FRA document (PDF/Image).
+   - Instead of real OCR, simulate by extracting mock text (e.g., “Patta Holder: Ramesh, Village: Gondia, Area: 2 hectares”).
+   - Save extracted data into SQLite/JSON database.
+
+3. FRA Atlas (WebGIS Portal):
+   - Interactive map (Leaflet.js) with village boundaries.
+   - Show mock shapefiles/GeoJSON of FRA plots.
+   - Layers:
+     • FRA claims (granted vs pending) – color coded.
+     • Assets (ponds, farms, forest) – use icons/markers.
+
+4. Asset Mapping (AI Simulation):
+   - For demo, hardcode some asset data (e.g., “Village Gondia: 2 ponds, 1 forest patch, 5 farms”).
+   - Display these assets as layers on the map.
+
+5. DSS Engine (Decision Support System):
+   - Rule-based recommendations:
+       • If water index low → recommend Jal Jeevan Mission.
+       • If farmland present but no scheme → recommend PM-Kisan.
+       • If degraded forest → recommend MGNREGA Plantation.
+   - Display recommendations in a Dashboard view.
+
+6. Dashboard:
+   - Show FRA claims count, assets mapped, schemes suggested.
+   - Use charts (Recharts or Chart.js).
+
+Integration Flow:
+- React frontend fetches map layers + data via Express API.
+- Express serves mock database (claims, assets, DSS results).
+- Leaflet renders interactive Atlas with FRA + assets.
+- Dashboard pulls summary data from backend.
+
+Design:
+- Use earthy green theme (tribal + forest).
+- Place SIH 2025 logo placeholder on navbar.
+- Keep UI simple and minimal for demo.
+
+Deliverables:
+- Full-stack web app running on Replit.
+- Mock demo showing FRA document digitization, GIS map, and DSS scheme recommendations.
